@@ -16,7 +16,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 git_repository(
     name = "io_bazel_rules_kombustion",
     # Check to ensure you have the latest/desired commit
-    commit = "0c4954468b7ca9e0e0e2473c417ecc0cbff45d55",
+    commit = "ab368b8c53f6f699bd9a3a15d85752d83180ee05",
     remote = "https://github.com/KablamoOSS/rules_kombustion.git",
 )
 ```
