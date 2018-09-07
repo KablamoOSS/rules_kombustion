@@ -18,12 +18,13 @@ done
 
 BUILD_FILE="{build_file}"
 BUILD_DIR=$(dirname $BUILD_FILE)
+SOURCE_FOLDER=$(basename $BUILD_DIR)
 
 DEFAULT_ENVIRONMENT="{default_environment}"
 IAM="{iam}"
 ACTION="{action}"
 MANIFEST_FILE="{manifest_file}"
-STACKFILE="{stack_file}"
+STACKFILE="{template_file}"
 MANIFEST_DIR=$(dirname $MANIFEST_FILE)
 
 # Capture the root dir, so we can refernce the stackfile after we cd to the kombustion
@@ -44,7 +45,7 @@ if [[ -n $PROFILE ]]; then
   KOMBUSTION_ARGS="$KOMBUSTION_ARGS --profile $PROFILE"
 fi
 
-UPSERT_ARGS="--param CommitHash=$COMMIT"
+UPSERT_ARGS="--param CommitHash=$COMMIT --param SourcePath=$BUILD_DIR --param SourceFolder=$SOURCE_FOLDER"
 
 echo i=$IAM
 if [[ "True" == "$IAM" ]]; then
@@ -83,11 +84,11 @@ def _add_dicts(*dicts):
 def _implementation(ctx):
     files = [ctx.executable.resolver]
 
-    for f in ctx.files.stacks:
+    for f in ctx.files.templates:
         script_content = script_template.format(
             build_file = ctx.build_file_path,
             manifest_file = ctx.attr.kombustion[KombustionFiles].manifest[0].path,
-            stack_file = f.path,
+            template_file = f.path,
             action = ctx.attr.action,
             default_environment = ctx.attr.default_environment,
             iam = ctx.attr.iam,
@@ -98,9 +99,9 @@ def _implementation(ctx):
         ctx.actions.write(script, script_content, is_executable = True)
 
     runfiles = ctx.runfiles(
-        files = ctx.files.stacks,
+        files = ctx.files.templates,
         transitive_files = depset(
-            ctx.files.stacks,
+            ctx.files.templates,
             transitive = ctx.attr.kombustion[KombustionFiles].deps,
         ),
     )
@@ -120,7 +121,7 @@ _upsert_kombustion_rule = rule(
                 executable = True,
                 allow_files = True,
             ),
-            "stacks": attr.label_list(
+            "templates": attr.label_list(
                 mandatory = True,
                 doc = "Stack files to be acted upon.",
                 allow_files = True,
@@ -144,7 +145,7 @@ _delete_kombustion_rule = rule(
                 executable = True,
                 allow_files = True,
             ),
-            "stacks": attr.label_list(
+            "templates": attr.label_list(
                 mandatory = True,
                 doc = "Stack files to be acted upon.",
                 allow_files = True,
@@ -168,7 +169,7 @@ _events_kombustion_rule = rule(
                 executable = True,
                 allow_files = True,
             ),
-            "stacks": attr.label_list(
+            "templates": attr.label_list(
                 mandatory = True,
                 doc = "Stack files to be acted upon.",
                 allow_files = True,
@@ -192,7 +193,7 @@ _generate_kombustion_rule = rule(
                 executable = True,
                 allow_files = True,
             ),
-            "stacks": attr.label_list(
+            "templates": attr.label_list(
                 mandatory = True,
                 doc = "Stack files to be acted upon.",
                 allow_files = True,
