@@ -133,7 +133,7 @@ _delete_kombustion_rule = rule(
     attrs = _add_dicts(
         {
             "resolver": attr.label(
-                default = Label("//meta/rules:resolver"),
+                default = Label("//:resolver"),
                 cfg = "host",
                 executable = True,
                 allow_files = True,
