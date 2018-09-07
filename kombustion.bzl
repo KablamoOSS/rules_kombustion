@@ -13,15 +13,14 @@ case $i in
     --environment=*)
     STACK_ENV=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
     ;;
-    --iam)
-    IAM="True"
-    ;;
 esac
 done
 
 BUILD_FILE="{build_file}"
 BUILD_DIR=$(dirname $BUILD_FILE)
 
+DEFAULT_ENVIRONMENT="{default_environment}"
+IAM="{iam}"
 ACTION="{action}"
 MANIFEST_FILE="{manifest_file}"
 STACKFILE="{stack_file}"
@@ -47,6 +46,7 @@ fi
 
 UPSERT_ARGS="--param CommitHash=$COMMIT"
 
+echo i=$IAM
 if [[ "True" == "$IAM" ]]; then
   UPSERT_ARGS="$UPSERT_ARGS --iam"
 fi
@@ -59,6 +59,8 @@ fi
 
 if [[ -n $STACK_ENV ]]; then
   ACTION_ARGS="$ACTION_ARGS --environment $STACK_ENV"
+else
+  ACTION_ARGS="$ACTION_ARGS --environment $DEFAULT_ENVIRONMENT"
 fi
 
 kombustion --version
@@ -87,6 +89,8 @@ def _implementation(ctx):
             manifest_file = ctx.attr.kombustion[KombustionFiles].manifest[0].path,
             stack_file = f.path,
             action = ctx.attr.action,
+            default_environment = ctx.attr.default_environment,
+            iam = ctx.attr.iam,
         )
 
         script = ctx.actions.declare_file("%s-%s" % (ctx.attr.action, f.short_path))
@@ -123,6 +127,8 @@ _upsert_kombustion_rule = rule(
             ),
             "kombustion": attr.label(),
             "action": attr.string(default = "upsert"),
+            "default_environment": attr.string(default = "Development"),
+            "iam": attr.bool(default = False, doc = "Sets --capability=iam"),
         },
     ),
     executable = True,
@@ -145,6 +151,8 @@ _delete_kombustion_rule = rule(
             ),
             "kombustion": attr.label(),
             "action": attr.string(default = "delete"),
+            "default_environment": attr.string(default = "Development"),
+            "iam": attr.bool(default = False, doc = "Sets --capability=iam"),
         },
     ),
     executable = True,
@@ -167,6 +175,8 @@ _events_kombustion_rule = rule(
             ),
             "kombustion": attr.label(),
             "action": attr.string(default = "events"),
+            "default_environment": attr.string(default = "Development"),
+            "iam": attr.bool(default = False, doc = "Sets --capability=iam"),
         },
     ),
     executable = True,
@@ -189,6 +199,8 @@ _generate_kombustion_rule = rule(
             ),
             "kombustion": attr.label(),
             "action": attr.string(default = "generate"),
+            "default_environment": attr.string(default = "Development"),
+            "iam": attr.bool(default = False, doc = "Sets --capability=iam"),
         },
     ),
     executable = True,
