@@ -23,6 +23,7 @@ BUILD_FILE="{build_file}"
 BUILD_DIR=$(dirname $BUILD_FILE)
 SRCS="{srcs}"
 BUCKET="{bucket}"
+NAME="{name}"
 BUCKET_KEY=$BUILD_DIR
 
 echo $SRCS
@@ -38,7 +39,7 @@ COMMIT=$(git rev-parse --short HEAD)
 
 cd $ROOT
 
-LAMBDA_ZIP_FILE="lambda-$COMMIT.zip"
+LAMBDA_ZIP_FILE="$NAME-$COMMIT.zip"
 
 # -j to strip the leading path
 zip -r -9 -j $LAMBDA_ZIP_FILE $SRCS
@@ -61,6 +62,7 @@ def _implementation(ctx):
     script_content = script_template.format(
         build_file = ctx.build_file_path,
         bucket = ctx.attr.bucket,
+        name = ctx.attr.name,
         srcs = " ".join([src.path for src in ctx.files.src]),
     )
 

@@ -144,3 +144,29 @@ overridden by passing in a flag as follows:
 ```
 bazel run //src/mars/pipeline/stepOne:deploy -- --environment Production
 ```
+
+## Lambda
+
+In the same `BUILD` file you added the `kombustion()` rule, add the following:
+
+```
+load("@io_bazel_rules_kombustion//:lambda.bzl", "lambda_upload")
+
+lambda_upload(
+    name = "lambda",
+    # Folders to be zipped up for our lambda
+    # The leading paths are stripped `zip -j`
+    src = [
+        "src",
+    ],
+    bucket = "lambda.infrastructure.jupiter.example",
+)
+```
+
+The bucket to store this lambda in the key is automatically derived from the
+path to this target, and the filename is the target name (in this example
+`lambda`) in addtion to the commit hash is added to the zip file.
+
+So if our file was at `src/mars/pipeline/stepOne/BUILD`, and the git commit is
+`0123abcd` then the lambda file would be at
+`s3://lambda.infrastructure.jupiter.example/src/mars/pipeline/stepOne/lambda-0123abcd.zip`.
