@@ -27,6 +27,21 @@ MANIFEST_FILE="{manifest_file}"
 STACKFILE="{template_file}"
 MANIFEST_DIR=$(dirname $MANIFEST_FILE)
 
+# Create the PREFIX
+# Create the REALM, which we define as the first two folders in the path.
+REALM=
+PREFIX=
+
+PATH_ARRAY=$(echo $MANIFEST_DIR | tr "/" "\n")
+
+i=1
+for FRAGMENT in $PATH_ARRAY
+do
+    CAPITALISED=$(echo $FRAGMENT | python -c "print raw_input().capitalize()")
+    PREFIX=$PREFIX$CAPITALISED
+done
+
+
 # Capture the root dir, so we can refernce the stackfile after we cd to the kombustion
 # root location
 
@@ -45,9 +60,8 @@ if [[ -n $PROFILE ]]; then
   KOMBUSTION_ARGS="$KOMBUSTION_ARGS --profile $PROFILE"
 fi
 
-UPSERT_ARGS="--param CommitHash=$COMMIT --param SourcePath=$BUILD_DIR --param SourceFolder=$SOURCE_FOLDER"
+UPSERT_ARGS="--param CommitHash=$COMMIT --param Prefix=$PREFIX --param SourcePath=$BUILD_DIR --param SourceFolder=$SOURCE_FOLDER --tag CommitHash=$COMMIT --tag SourcePath=$BUILD_DIR"
 
-echo i=$IAM
 if [[ "True" == "$IAM" ]]; then
   UPSERT_ARGS="$UPSERT_ARGS --iam"
 fi
