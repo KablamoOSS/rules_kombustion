@@ -11,7 +11,7 @@ case $i in
 
     ;;
     --environment=*)
-    STACK_ENV=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
+    DEPLOY_ENV=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
     ;;
 esac
 done
@@ -20,7 +20,7 @@ BUILD_FILE="{build_file}"
 BUILD_DIR=$(dirname $BUILD_FILE)
 SOURCE_FOLDER=$(basename $BUILD_DIR)
 
-DEFAULT_ENVIRONMENT="{default_environment}"
+STACK_ENV="{default_environment}"
 IAM="{iam}"
 ACTION="{action}"
 MANIFEST_FILE="{manifest_file}"
@@ -34,17 +34,14 @@ PREFIX=
 
 PATH_ARRAY=$(echo $MANIFEST_DIR | tr "/" "\n")
 
-i=1
 for FRAGMENT in $PATH_ARRAY
 do
     CAPITALISED=$(echo $FRAGMENT | python -c "print raw_input().capitalize()")
     PREFIX=$PREFIX$CAPITALISED
 done
 
-
 # Capture the root dir, so we can refernce the stackfile after we cd to the kombustion
 # root location
-
 ROOT=$(pwd)
 
 cd $BUILD_WORKSPACE_DIRECTORY
@@ -60,27 +57,30 @@ if [[ -n $PROFILE ]]; then
   KOMBUSTION_ARGS="$KOMBUSTION_ARGS --profile $PROFILE"
 fi
 
-UPSERT_ARGS="--param CommitHash=$COMMIT --param Prefix=$PREFIX --param SourcePath=$BUILD_DIR --param SourceFolder=$SOURCE_FOLDER --tag CommitHash=$COMMIT --tag SourcePath=$BUILD_DIR"
+if [[ -n $DEPLOY_ENV ]]; then
+  STACK_ENV="$DEPLOY_ENV"
+fi
+
+UPSERT_ARGS="--param CommitHash=$COMMIT --param Prefix=$PREFIX --param SourcePath=$BUILD_DIR --param SourceFolder=$SOURCE_FOLDER --tag CommitHash=$COMMIT --tag SourcePath=$BUILD_DIR --tag Environment=$STACK_ENV"
 
 if [[ "True" == "$IAM" ]]; then
   UPSERT_ARGS="$UPSERT_ARGS --iam"
 fi
 
-ACTION_ARGS=""
+ACTION_ARGS="$ACTION_ARGS --environment $STACK_ENV"
 
 if [[ "upsert" == "$ACTION" ]]; then
-  ACTION_ARGS="$UPSERT_ARGS"
+  ACTION_ARGS="$ACTION_ARGS $UPSERT_ARGS"
+
 fi
 
-if [[ -n $STACK_ENV ]]; then
-  ACTION_ARGS="$ACTION_ARGS --environment $STACK_ENV"
-else
-  ACTION_ARGS="$ACTION_ARGS --environment $DEFAULT_ENVIRONMENT"
-fi
-
+echo "============================================================================"
 kombustion --version
+echo "----------------------------------------------------------------------------"
+echo "Deploying to environment: $STACK_ENV"
+echo "----------------------------------------------------------------------------"
 
-echo "Running: kombustion $KOMBUSTION_ARGS $ACTION $ACTION_ARGS $STACKFILE"
+echo "kombustion $KOMBUSTION_ARGS $ACTION $ACTION_ARGS $STACKFILE"
 
 # Run kombustion
 kombustion $KOMBUSTION_ARGS $ACTION $ACTION_ARGS $ROOT/$STACKFILE
